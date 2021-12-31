@@ -1,14 +1,13 @@
 package com.anish.calabashbros;
 
-public class Thing {
+import java.io.Serializable;
+
+public class Thing implements Serializable {
 
     protected World world;
+    private static final long serialVersionUID = 12L;
 
     public Tile<? extends Thing> tile;
-
-    protected enum Position {
-        WALL, FLOOR, BEAN, CHERRY, DRUG, CALABASH, MONSTER, BULLET
-    }
 
     public int getX() {
         return this.tile.getxPos();

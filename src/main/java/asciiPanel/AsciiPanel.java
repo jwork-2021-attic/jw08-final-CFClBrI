@@ -295,6 +295,7 @@ public class AsciiPanel extends JPanel {
     }
 
     private void loadImages() {
+        loadStartImg();
         loadImage("resources/wall/wall0.png");
         loadImage("resources/wall/wall1.png");
         loadImage("resources/wall/wall2.png");
@@ -423,6 +424,27 @@ public class AsciiPanel extends JPanel {
             charGlyphs[i] = new BufferedImage(charWidth, charHeight, BufferedImage.TYPE_INT_ARGB);
             charGlyphs[i].getGraphics().drawImage(glyphSprite, 0, 0, charWidth, charHeight, sx, sy, sx + charWidth,
                     sy + charHeight, null);
+        }
+    }
+
+    private void loadStartImg() {
+        try {
+            glyphSprite = ImageIO.read(AsciiPanel.class.getClassLoader().getResource("resources/start.png"));
+        } catch (IOException e) {
+            System.err.println("loadGlyphs(): " + e.getMessage());
+        }
+
+        for (int i = 0; i < 20; i++) {
+            int sy = i * charHeight;
+
+            for (int j = 0; j < 24; j++) {
+                int sx = j * charWidth;                                
+
+                BufferedImage img = new BufferedImage(charWidth, charHeight, BufferedImage.TYPE_INT_ARGB);
+                img.getGraphics().drawImage(glyphSprite, 0, 0, charWidth, charHeight, sx, sy, sx + charWidth,
+                sy + charHeight, null);
+                images.put("(" + j + "," + i + ")", img);
+            }
         }
     }
 
@@ -741,10 +763,11 @@ public class AsciiPanel extends JPanel {
 
     private void loadImage(String url) {
         try {
+            System.out.println(url);
             BufferedImage img = ImageIO.read(AsciiPanel.class.getClassLoader().getResource(url));
             images.put(url, img);            
         }
-        catch (IOException e) {            
+        catch (Exception e) {            
             System.out.println("glypy load error: " + e.getMessage());            
         }             
     }

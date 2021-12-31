@@ -12,13 +12,19 @@ public class MazeGenerator {
     private Queue<Node> queue = new LinkedList<>();
     private Random rand = new Random();
     private int[][] maze;
-    private int[][] seen;
     private int dimension;
+    private int initAreaLength;
+    private int cherryLimit = 3;
+    private int drugLimit = 2;
+    private int playerCount = 2;
+    private int[][] playerPositons;
 
-    public MazeGenerator(int dim) {
+    public MazeGenerator(int dim, int playerCount) {
         maze = new int[dim][dim];
-        seen = new int[dim][dim];
+        playerPositons = new int[playerCount][2];
         dimension = dim;
+        this.playerCount = playerCount;
+        initAreaLength = dim - 10;
     }
 
     public void generateMaze() {
@@ -33,15 +39,72 @@ public class MazeGenerator {
         }
         randomlyReviseNodes();
         bfs();
+        setPlayers();
+        setThings();
     }
 
     public int[][] getMaze() {
-        return seen;
+        return maze;
     }
 
+    public void setPlayerCount(int playerCount) {
+        this.playerCount = playerCount;
+    }
 
+    public int[][] getPlayerPositions() {
+        return playerPositons;
+    }
+
+    private void setPlayers() {
+        for (int i = 0; i < playerCount; i++) {
+            int pos = 0, posX = 0, posY = 0;
+            do {
+                pos = rand.nextInt(initAreaLength * initAreaLength);
+                posX = pos / initAreaLength;
+                posY = pos % initAreaLength;
+            } while (posX == 0 || posY == 0 || maze[posX][posY] == 0);
+            playerPositons[i][0] = posX;
+            playerPositons[i][1] = posY;
+            maze[posX][posY] = 0;
+        }
+    }
+
+    private void setThings() {
+        int cherryCount = 0, drugCount = 0, beanCount = 0;
+        for (int i = 0; i < dimension; i++) {
+            for (int j = 0; j < dimension; j++) {
+                if (i == 0 && j == 0) {
+                    continue;
+                }
+                if (maze[i][j] == 0 || i == dimension - 1 || j == dimension - 1) {
+                    continue;
+                } 
+                if (rand.nextInt(10000) % 2 == 0) { //bean
+                    maze[i][j] = 2;
+                    beanCount++;
+                }      
+                else if (cherryCount < cherryLimit && 
+                        rand.nextInt(10000) % 80 == 0) { //cherry
+                    maze[i][j] = 3;
+                    cherryCount++;
+                }
+                else if (drugCount < drugLimit &&
+                        rand.nextInt(10000) % 80 == 0) { //drug
+                    maze[i][j] = 4;
+                    drugCount++;
+                }                          
+            }
+        }
+        if (beanCount % playerCount == 0) {
+            maze[0][0] = 2;
+        }
+        else {
+            maze[0][0] = 1;
+        }        
+    }
 
     private void bfs() {
+        int[][] seen = new int[dimension][dimension];
         seen[0][0] = 2;
         queue.add(new Node(0, 0));
         while (!queue.isEmpty()) {
@@ -57,6 +120,7 @@ public class MazeGenerator {
             }
             seen[curr.y][curr.x] = 1;
         }
+        maze = seen;
     }
 
     private void randomlyReviseNodes() {

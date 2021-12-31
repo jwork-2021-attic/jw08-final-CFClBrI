@@ -1,15 +1,20 @@
 package com.anish.calabashbros;
 
-public class World {
+import java.awt.event.KeyEvent;
+import java.io.Serializable;
+import java.util.Vector;
+
+public class World implements Serializable {
 
     public static final int WIDTH = 50;
     public static final int HEIGHT = 50;
-
-    private int mazeBegin;
-    private int mazeSize;
-    private boolean isOver = false;
+    public int mazeBegin;
+    public int mazeSize;
     public int yBegin = 0;
+    private static final long serialVersionUID = 15L;
 
+    private boolean isOver = false;
+    private Vector<Calabash> players;
     private Tile<Thing>[][] tiles;
 
     public World(int mazeBegin, int mazeSize) {
@@ -47,49 +52,35 @@ public class World {
         return isOver;
     }
 
-    private void showChar(char ch, int posX, int posY) {
+    public void setOver() {
+        isOver = true;
+    }
+
+    public void showChar(char ch, int posX, int posY) {
         Char character = new Char(this, ch);
         put(character, posX, posY);
     }
 
-    private void showString(String str, int posX, int posY) {
+    public void showString(String str, int posX, int posY) {
         for (int i = 0; i < str.length(); i++) {
             showChar(str.charAt(i), posX + i, posY);
         }
     }
 
-    public void showHP(int HP) {
-        int HPBeginX = mazeBegin + mazeSize + 2;
-        int HPBeginY = mazeBegin + mazeSize / 2; 
-        showString("HP:" + HP, HPBeginX, HPBeginY);       
-    }
-   
-    public void showInvincible(int second) {
-        int invinBeginX = mazeBegin + mazeSize + 2;
-        int invinBeginY = mazeBegin + mazeSize / 2 + 1;        
-        showString("Invincible:" + second / 10 + second % 10, invinBeginX, invinBeginY);        
+    public void setPlayers(Vector<Calabash> players) {
+        this.players = players;
     }
 
-    public void hideInvincible() {
-        int invinBeginX = mazeBegin + mazeSize + 2;
-        int invinBeginY = mazeBegin + mazeSize / 2 + 1;
-        for (int i = 0; i < 13; i++) {
-            clear(invinBeginX + i, invinBeginY);
+    public void continueGame() {
+        for (int i = 0; i < mazeSize; i++) {
+            for (int j = 0; j < mazeSize; j++) {
+                Thing thing = get(mazeBegin + i, mazeBegin + j);
+                if (thing instanceof Moveable) {
+                    Thread thread = new Thread((Moveable)thing);
+                    thread.start();
+                }
+            }
         }
-    }
-
-    public void showWin() {
-        isOver = true;
-        int winBeginX = mazeBegin + mazeSize + 2;
-        int winBgeinY = mazeBegin + mazeSize / 2 - 1; 
-        showString("You Win", winBeginX, winBgeinY);
-    }
-
-    public void showLose() {
-        isOver = true;
-        int loseBeginX = mazeBegin + mazeSize + 2;
-        int loseBgeinY = mazeBegin + mazeSize / 2 - 1;  
-        showString("You Lose", loseBeginX, loseBgeinY);
     }
 
     public void killMonsters() {        
@@ -102,5 +93,30 @@ public class World {
                 }
             }
         }        
+    }
+
+    public void respondToUserInput(int num, int keyCode) {
+        Calabash calabash = players.get(num);
+        if (keyCode >= KeyEvent.VK_LEFT && keyCode <= KeyEvent.VK_DOWN) {                    
+            calabash.walk(keyCode - KeyEvent.VK_LEFT);
+            if (keyCode == KeyEvent.VK_DOWN) {
+                if (yBegin < 7 && calabash.getY() - yBegin >= 20) {
+                    yBegin++;
+                }
+            }
+            else if (keyCode == KeyEvent.VK_UP) {
+                if (yBegin > 0 && calabash.getY() <= yBegin + 5) {
+                    yBegin--;
+                }
+            }
+        }
+        else if (keyCode == KeyEvent.VK_ENTER) {
+            calabash.createBullet();
+        }
+    }
+
+    public void stopUserInput(int num) {
+        Calabash calabash = players.get(num);
+        calabash.stopWalk();
     }
 }

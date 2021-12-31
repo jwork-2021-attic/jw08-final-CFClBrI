@@ -12,4 +12,8 @@ public class Creature extends Moveable  {
         reduct();
         alive = false;
     }
+
+    public boolean getAlive() {
+        return alive;
+    }
 }

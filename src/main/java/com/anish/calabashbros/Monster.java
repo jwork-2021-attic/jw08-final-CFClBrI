@@ -9,7 +9,7 @@ import java.util.concurrent.TimeUnit;
 public class Monster extends Creature {
     
     private Random random;
-    private Calabash calabash;
+    private Vector<Calabash> players;
     private int mazeBegin;
     private int mazeSize;
     private Queue<int[]> queue;
@@ -17,21 +17,27 @@ public class Monster extends Creature {
     private int[][] record;
     private Vector<Integer> path;
     private int step;
-    private int storeX;
-    private int storeY;
-    private int hardLevel = 10;
+    private Vector<int[]> store;
+    private int destination = -1;
+    private int hardLevel = 0;
+    private static final long serialVersionUID = 8L;
 
-    public Monster(World world, Calabash calabash, int mazeBegin, int mazeSize) {
+    public Monster(World world, Vector<Calabash> players) {
         super("resources/ghost/direction3.png", world);
         
         random = new Random();        
-        this.calabash = calabash;
-        this.mazeBegin = mazeBegin;
-        this.mazeSize = mazeSize;
+        this.players = players;
+        this.mazeBegin = world.mazeBegin;
+        this.mazeSize = world.mazeSize;
+        store = new Vector<>(players.size());
         isOn = Position.FLOOR;
     }
 
-    private void bfs() {
+    public void setPlayers(Vector<Calabash> players) {
+        this.players = players;
+    }
+
+    protected int bfs(Vector<Calabash> players) {
         //0:left 1:up 2:right 3:down
         queue = new LinkedList<>();
         seen = new int[mazeSize][mazeSize];
@@ -42,8 +48,14 @@ public class Monster extends Creature {
             int[] curr = queue.poll();
             int currX = curr[0];
             int currY = curr[1];
-            if (currX == calabash.getX() && currY == calabash.getY()) {
-                break;
+            for (int i = 0; i < players.size(); i++) {
+                if (players.get(i).getInvincible()) {
+                    continue;
+                }
+                if (currX == players.get(i).getX() &&
+                    currY == players.get(i).getY()) {
+                    return i;
+                }
             }
             for (int direction = 0; direction < 4; direction++) {
                 int directionX = directions[direction][0];
@@ -63,14 +75,16 @@ public class Monster extends Creature {
             }
             seen[currY - mazeBegin][currX - mazeBegin] = 1;
         }
+        return -1;
     }
 
-    private void createPath() {        
+    protected void createPath(Vector<Calabash> players) {  
+        destination = -1;      
         do {
-            bfs();
-        } while (seen[calabash.getY() - mazeBegin][calabash.getX() - mazeBegin] == 0);
-        int currX = calabash.getX();
-        int currY = calabash.getY();       
+            destination = bfs(players);
+        } while (destination == -1);
+        int currX = players.get(destination).getX();
+        int currY = players.get(destination).getY();       
         path = new Vector<>();
         while (currX != getX() || currY != getY()) {
             int direction = record[currY - mazeBegin][currX - mazeBegin];
@@ -83,24 +97,50 @@ public class Monster extends Creature {
         step = 0;
     }
 
-    private int chooseDirection() {
-        if (path != null && step < path.size() && calabash.getX() == storeX && calabash.getY() == storeY) {
+    private boolean judgePlayersMove() {
+        for (int i = 0; i < players.size(); i++) {
+            if (players.get(i).getX() != store.get(i)[0] ||
+                players.get(i).getY() != store.get(i)[1]) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private boolean judgePlayersInvincible() {
+        for (int i = 0; i < players.size(); i++) {
+            if (!players.get(i).getInvincible()) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    private void storePlayersPos() {
+        for (int i = 0; i < players.size(); i++) {
+            store.get(i)[0] = players.get(i).getX();
+            store.get(i)[1] = players.get(i).getY();
+        }
+    }
+
+    protected int chooseDirection() {
+        if (path != null && step < path.size() &&
+            !players.get(destination).getInvincible() && !judgePlayersMove()) {
             return path.get(step);
         }
-        storeX = calabash.getX();
-        storeY = calabash.getY();
-        createPath();
+        storePlayersPos();
+        createPath(players);
         return path.get(step);
     }
 
     private boolean chooseMoveType() {
-        if (calabash.getInvincible()) {
+        if (judgePlayersInvincible()) {
             return false;
         }
         return random.nextInt(10) < hardLevel;
     }
 
-    private Position judgeMove(int directionX, int directionY) {
+    protected Position judgeMove(int directionX, int directionY) {
         Thing thing = world.get(getX() + directionX, getY() + directionY);
         if (thing instanceof Wall || thing instanceof Monster) {
             return Position.WALL;
@@ -127,10 +167,6 @@ public class Monster extends Creature {
             return Position.DRUG;
         }
         return Position.FLOOR;
-    }
-
-    public boolean getAlive() {
-        return alive;
     }
 
     @Override
@@ -160,11 +196,11 @@ public class Monster extends Creature {
                 step++;
             }
             else {
-                createPath();
+                createPath(players);
             }        
             isOn = position;            
             try {
-                TimeUnit.MILLISECONDS.sleep(450);
+                TimeUnit.MILLISECONDS.sleep(250);
             }
             catch(InterruptedException e) {
                 break;

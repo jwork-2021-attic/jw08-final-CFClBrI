@@ -5,6 +5,7 @@ import java.util.concurrent.TimeUnit;
 public class Bullet extends Creature {
     
     private int direction;
+    private static final long serialVersionUID = 2L;
 
     public Bullet(World world, int direction, Position isOn) {
         super("resources/arrow/" + direction + ".png", world);

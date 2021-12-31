@@ -1,90 +1,75 @@
-
-
-import java.awt.event.KeyEvent;
-import java.awt.event.KeyListener;
-
-import java.util.concurrent.TimeUnit;
-
-import javax.swing.JFrame;
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.ObjectOutputStream;
+import java.io.PrintWriter;
+import java.net.ServerSocket;
+import java.net.Socket;
 
 import com.anish.calabashbros.World;
 import com.anish.screen.Screen;
 import com.anish.screen.WorldScreen;
 
-import asciiPanel.AsciiFont;
-import asciiPanel.AsciiPanel;
+public class Main {
 
-class UIScreen extends JFrame implements Runnable, KeyListener {
-
-    private AsciiPanel terminal;
-    private Screen screen;
-
-    private int mazeBegin = 1;
-    private int mazeSize = 30;
-
-    UIScreen(AsciiPanel terminal, Screen screen) {
-        super();
-        this.terminal = terminal;
-        this.screen = screen;
-        add(terminal);
-        pack();
-        addKeyListener(this);        
-        setVisible(true);
-        setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-    }
-
-    public void respondToUserInput(KeyEvent e) {
-        screen = screen.respondToUserInput(e);
-        repaint();
-    }
-
-    public void stopUserInput() {
-        screen = screen.stopUserInput();
-        repaint();
-    }
-
-    @Override
-    public void repaint() {
-        terminal.clear(' ', mazeBegin + mazeSize + 1, 1, 15, mazeSize);
-        screen.displayOutput(terminal);
-        super.repaint();
-    }
-
-    @Override
-    public void keyTyped(KeyEvent e) {
-
-    }
-
-    @Override
-    public void keyPressed(KeyEvent e) {
-        respondToUserInput(e);
-    }
-
-    @Override
-    public void keyReleased(KeyEvent e) {
-        stopUserInput();
-    }
-
-    public void run() {
-        try {
-            while (true) {                
-                TimeUnit.MILLISECONDS.sleep(100);
-                repaint();
+    private static boolean stringEqual(String s1, String s2) {
+        if (s1.length() != s2.length()) {
+            return false;
+        }
+        for (int i = 0; i < s1.length(); i++) {
+            if ((int)s1.charAt(i) != (int)s2.charAt(i)) {
+                return false;
             }
         }
-        catch(InterruptedException e) {
+        return true;
+    }
+
+    public static void main(String[] args) {
+        Screen screen = new WorldScreen();
+        int playerId = 0;
+
+        int portNumber = 8888;
+        try {
+            ServerSocket serverSocket = new ServerSocket(portNumber);
+            Socket clientSocket = serverSocket.accept();     
+            PrintWriter out = new PrintWriter(clientSocket.getOutputStream(), true);
+            ObjectOutputStream oos = new ObjectOutputStream(clientSocket.getOutputStream());                  
+            BufferedReader in = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
+            String inputLine = "";            
+            do {
+                inputLine = in.readLine().trim();
+                if (stringEqual(inputLine, "connect")) {
+                    out.println(Integer.toString(playerId));                    
+                    playerId++;
+                }
+                else if (stringEqual(inputLine, "keyEvent")) {
+                    int num = Integer.parseInt(in.readLine());
+                    int keyCode = Integer.parseInt(in.readLine());
+                    screen.respondToUserInput(num, keyCode);
+                }
+                else if (stringEqual(inputLine, "stopKeyEvent")) {
+                    int num = Integer.parseInt(in.readLine());
+                    screen.stopUserInput(num);
+                }
+                else if (stringEqual(inputLine, "repaint")) {
+                    String[][] output = screen.getOutput();
+                    out.println("start");
+                    for (int x = 0; x < World.WIDTH; x++) {
+                        for (int y = 0; y < World.HEIGHT; y++) {
+                            out.println(output[x][y]);
+                        }
+                    }
+                    out.println("end");
+                }
+                else {
+                    System.out.println("unknown input: " + inputLine + ".");
+                }
+            } while (inputLine != null);
+            serverSocket.close();
+        }
+        catch (IOException e) {
             e.printStackTrace();
         }
-    }
-}
-
-public class Main {
-    public static void main(String[] args) {
-        AsciiPanel terminal = new AsciiPanel(World.WIDTH, World.HEIGHT, AsciiFont.CP437_32x32);
-        Screen screen = new WorldScreen();
-        UIScreen uiScreen = new UIScreen(terminal, screen);
-        Thread uiThread = new Thread(uiScreen);
-        uiThread.start();
     }
 
 }

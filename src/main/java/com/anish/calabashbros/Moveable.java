@@ -4,6 +4,7 @@ public class Moveable extends Thing implements Runnable {
     
     protected int[][] directions;
     protected Position isOn;
+    private static final long serialVersionUID = 10L;
 
     public Moveable(String url, World world) {
         super(url, world);
@@ -15,7 +16,7 @@ public class Moveable extends Thing implements Runnable {
         directions[3][0] = 0; directions[3][1] = 1; //down
     }
 
-    public void moveTo(int xPos, int yPos) {
+    protected void moveTo(int xPos, int yPos) {
         this.world.put(this, xPos, yPos);
     }
 
@@ -24,8 +25,12 @@ public class Moveable extends Thing implements Runnable {
         moveTo(xPos, yPos);
     }
 
-    protected Position getOn() {
+    public Position getOn() {
         return isOn;
+    }
+
+    public void setOn(Position position) {
+        isOn = position;
     }
 
     protected void reduct() {

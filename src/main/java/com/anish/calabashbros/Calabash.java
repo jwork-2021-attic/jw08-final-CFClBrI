@@ -1,27 +1,32 @@
 package com.anish.calabashbros;
 
-import java.util.Timer;
-import java.util.TimerTask;
+import java.util.concurrent.TimeUnit;
 
 public class Calabash extends Creature {
     
     private int beanCount;
-    private int HP = 3;
-    private boolean isInvincible = false;
+    private int HP;
     private int invincibleTime = 0;
     private int beginX;
     private int beginY;
+    private int mazeBegin;
+    private int mazeSize;
     private int step = 0;
+    private static final long serialVersionUID = 3L;
 
-    public Calabash(World world, int beanCount,
-                    int beginX, int beginY) {
+    public Calabash(World world, int beanCount, int beginHP,
+                    int beginX, int beginY, int currX, int currY,
+                    int mazeBegin, int mazeSize) {
         super("resources/player/3_stand.png", world);
         this.beanCount = beanCount;
         this.beginX = beginX;
         this.beginY = beginY;
-        moveTo(beginX, beginY);
+        this.mazeBegin = mazeBegin;
+        this.mazeSize = mazeSize;
+        HP = beginHP;
+        moveTo(currX, currY);
         isOn = Position.FLOOR;
-        world.showHP(HP);
+        showHP(HP);
     }
 
     private void judgeEat(Moveable moveable) {
@@ -60,9 +65,13 @@ public class Calabash extends Creature {
         return Position.FLOOR;
     }
 
+    public int getHP() {
+        return HP;
+    }
+
     public void decreaseHP() {
         HP--;
-        world.showHP(HP);
+        showHP(HP);
         if (HP <= 0) {
             lose();
         }
@@ -78,21 +87,26 @@ public class Calabash extends Creature {
         eatCherry();
     }
 
-    private void enterInvincible() {
-        isInvincible = true;
-        invincibleTime = 10;
-        world.showInvincible(invincibleTime);
+    public void enterInvincible(int time) {
+        if (time == 0) {
+            return;
+        }
+        invincibleTime = time;
+        showInvincible(invincibleTime);       
+        Thread thread = new Thread(this);
+        thread.start();    
     }
 
-    private void leaveInvinsible() {
-        if (isInvincible) {
-            isInvincible = false;
-            world.hideInvincible();
-        }        
+    private void leaveInvinsible() {        
+        hideInvincible();               
     }
 
     public boolean getInvincible() {
-        return isInvincible;
+        return invincibleTime != 0;
+    }
+
+    public int getInvincibleTime() {
+        return invincibleTime;
     }
 
     private void eatBean() {        
@@ -103,31 +117,17 @@ public class Calabash extends Creature {
     }
 
     private void eatCherry() {
-        if (isInvincible) {
+        if (invincibleTime != 0) {
             invincibleTime += 10;
             return;
         }
-        enterInvincible();
-        Timer timer = new Timer();                        
-        timer.schedule(new TimerTask() {
-            @Override
-            public void run() {
-                invincibleTime--;                              
-                if (invincibleTime == 0) {
-                    leaveInvinsible();
-                    timer.cancel();
-                }
-                else {
-                    world.showInvincible(invincibleTime);  
-                }
-            }
-        }, 1000, 1000);        
+        enterInvincible(10);     
     }
 
     private void eatDrug() {
         if (HP < 9) {
             HP++;
-            world.showHP(HP);
+            showHP(HP);
         }        
     }
 
@@ -171,14 +171,48 @@ public class Calabash extends Creature {
 
     private void win() {
         kill();
-        world.showWin();
+        showWin();
         world.killMonsters();
     }
 
     private void lose() {
         kill();
-        world.showLose();
+        showLose();
         world.killMonsters();
+    }
+
+    public void showHP(int HP) {
+        int HPBeginX = mazeBegin + mazeSize + 2;
+        int HPBeginY = mazeBegin + mazeSize / 2; 
+        world.showString("HP:" + HP, HPBeginX, HPBeginY);       
+    }
+   
+    public void showInvincible(int second) {
+        int invinBeginX = mazeBegin + mazeSize + 2;
+        int invinBeginY = mazeBegin + mazeSize / 2 + 1;        
+        world.showString("Invincible:" + second / 10 + second % 10, invinBeginX, invinBeginY);        
+    }
+
+    public void hideInvincible() {
+        int invinBeginX = mazeBegin + mazeSize + 2;
+        int invinBeginY = mazeBegin + mazeSize / 2 + 1;
+        for (int i = 0; i < 13; i++) {
+            world.clear(invinBeginX + i, invinBeginY);
+        }
+    }
+
+    public void showWin() {
+        world.setOver();
+        int winBeginX = mazeBegin + mazeSize + 2;
+        int winBgeinY = mazeBegin + mazeSize / 2 - 1; 
+        world.showString("You Win", winBeginX, winBgeinY);
+    }
+
+    public void showLose() {
+        world.setOver();
+        int loseBeginX = mazeBegin + mazeSize + 2;
+        int loseBgeinY = mazeBegin + mazeSize / 2 - 1;  
+        world.showString("You Lose", loseBeginX, loseBgeinY);
     }
 
     public void walk(int direction) {
@@ -204,14 +238,37 @@ public class Calabash extends Creature {
             eatDrug();
         }
         else if (position == Position.MONSTER) {
-            if (!isInvincible) {
+            if (invincibleTime == 0) {
                 decreaseHP();
-            }
+            }          
         }
     }
 
     public void stopWalk() {
         String url = getUrl();
         setUrl(url.substring(0, 19) + "stand.png");
+    }
+
+    @Override
+    public void run() {
+        if (invincibleTime == 0) {
+            return;
+        }
+        while (true) {
+            try {
+                TimeUnit.MILLISECONDS.sleep(1000);
+                invincibleTime--;                              
+                if (invincibleTime == 0) {
+                    leaveInvinsible();
+                    break;
+                }
+                else {
+                    showInvincible(invincibleTime);  
+                }
+            }
+            catch(InterruptedException e) {
+                break;
+            }          
+        }
     }
 }

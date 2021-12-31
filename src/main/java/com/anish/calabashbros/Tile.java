@@ -1,10 +1,13 @@
 package com.anish.calabashbros;
 
-public class Tile<T extends Thing> {
+import java.io.Serializable;
+
+public class Tile<T extends Thing> implements Serializable {
 
     private T thing;
     private int xPos;
     private int yPos;
+    private static final long serialVersionUID = 13L;
 
     public T getThing() {
         return thing;

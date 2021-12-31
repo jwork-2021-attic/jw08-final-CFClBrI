@@ -1,31 +1,45 @@
 package com.anish.calabashbros;
 
 import java.util.Vector;
+import java.io.Serializable;
 import java.util.Random;
 
-public class MonsterManager extends Thread {
+public class MonsterManager extends Thread implements Serializable {
     
     private World world;    
     private Vector<Monster> monsters;
-    private Calabash calabash;
+    private Vector<Calabash> players;
 
     private int mazeBegin;
     private int mazeSize;
     private int monsterLimit = 10;
     private Random random;
     private boolean side = true;
+    private static final long serialVersionUID = 9L;
 
-    public MonsterManager(World world, int mazeBegin, int mazeSize, Calabash calabash) {
+    public MonsterManager(World world, Vector<Calabash> players) {
         this.world = world;
-        this.mazeBegin = mazeBegin;
-        this.mazeSize = mazeSize;
-        this.calabash = calabash;
+        this.mazeBegin = world.mazeBegin;
+        this.mazeSize = world.mazeSize;
+        this.players = players;
         monsters = new Vector<>();
         random = new Random();
     }
 
+    public MonsterManager(World world, int mazeBegin, int mazeSize, Vector<Calabash> players, Vector<Monster> monsters) {
+        this(world, players);
+
+        this.monsters = monsters;
+        for (int i = 0; i < monsters.size(); i++) {
+            Monster monster = monsters.get(i);
+            monster.setPlayers(players);
+            Thread monsterThread = new Thread(monster);
+            monsterThread.start();
+        }
+    }
+
     private void createMonster(int posX, int posY) {
-        Monster monster = new Monster(world, calabash, mazeBegin, mazeSize);
+        Monster monster = new Monster(world, players);
         Thread monsterThread = new Thread(monster);        
         monsters.add(monster);
         world.put(monster, posX, posY);
