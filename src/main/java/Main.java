@@ -53,13 +53,21 @@ public class Main {
                 }
                 else if (stringEqual(inputLine, "repaint")) {
                     String[][] output = screen.getOutput();
-                    out.println("start");
-                    for (int x = 0; x < World.WIDTH; x++) {
-                        for (int y = 0; y < World.HEIGHT; y++) {
-                            out.println(output[x][y]);
+                    String str = "";
+                                        
+                    for (int y = 0; y < World.HEIGHT; y++) {
+                        for (int x = 0; x < World.WIDTH; x++) {
+                            if (output[x][y] == "") {
+                                str += '^';
+                            }
+                            else {
+                                str += output[x][y];
+                            }
+                            str += '|';
                         }
                     }
-                    out.println("end");
+                    out.println(str);
+                    
                 }
                 else {
                     System.out.println("unknown input: " + inputLine + ".");

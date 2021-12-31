@@ -763,7 +763,6 @@ public class AsciiPanel extends JPanel {
 
     private void loadImage(String url) {
         try {
-            System.out.println(url);
             BufferedImage img = ImageIO.read(AsciiPanel.class.getClassLoader().getResource(url));
             images.put(url, img);            
         }

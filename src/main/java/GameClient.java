@@ -181,17 +181,19 @@ public class GameClient extends JFrame implements KeyListener, Runnable {
         try {        
                         
             str = in.readLine().trim();
-            //System.out.println(str);
-            
-            for (int x = 0; x < World.WIDTH; x++) {
-                for (int y = 0; y < World.HEIGHT; y++) {
-                
-                    str = in.readLine().trim();
-                    
+            String[] output = str.split("\\|");
+
+            for (int y = 0; y < World.HEIGHT; y++) {
+                for (int x = 0; x < World.WIDTH; x++) {
+                    str = output[y * World.HEIGHT + x];
                     if (str.length() == 0) {
                         continue;
                     }
-                    if (str.length() == 1) {
+                    
+                    if (str.charAt(0) == '^') {
+                        continue;
+                    }
+                    else if (str.length() == 1) {
                         terminal.write(str.charAt(0), x, y);
                     }
                     else {
@@ -200,10 +202,7 @@ public class GameClient extends JFrame implements KeyListener, Runnable {
                                         
                 }
             }
-
                         
-            str = in.readLine().trim();
-            //System.out.println(str);
         }
         catch (IOException e) {
             e.printStackTrace();
