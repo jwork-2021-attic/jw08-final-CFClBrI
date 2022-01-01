@@ -35,34 +35,23 @@ public class Main {
             PrintWriter out = new PrintWriter(clientSocket.getOutputStream(), true);
             ObjectOutputStream oos = new ObjectOutputStream(clientSocket.getOutputStream());                  
             BufferedReader in = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
-            String inputLine = "";            
+            String[] inputLine;            
             do {
-                inputLine = in.readLine().trim();
-                if (stringEqual(inputLine, "connect")) {
+                inputLine = in.readLine().trim().split("\\|");
+                if (stringEqual(inputLine[0], "connect")) {
                     out.println(Integer.toString(playerId));                    
                     playerId++;
                 }
-                else if (stringEqual(inputLine, "keyEvent")) {
-                    try {
-                        String[] str = in.readLine().split("\\|");
-                        int num = Integer.parseInt(str[0]);
-                        int keyCode = Integer.parseInt(str[1]);
-                        screen.respondToUserInput(num, keyCode);
-                    }
-                    catch (NumberFormatException e) {
-                        continue;
-                    }
+                else if (stringEqual(inputLine[0], "keyEvent")) {                    
+                    int num = Integer.parseInt(inputLine[1]);
+                    int keyCode = Integer.parseInt(inputLine[2]);
+                    screen.respondToUserInput(num, keyCode);                    
                 }
-                else if (stringEqual(inputLine, "stopKeyEvent")) {
-                    try {
-                        int num = Integer.parseInt(in.readLine());
-                        screen.stopUserInput(num);
-                    }
-                    catch (NumberFormatException e) {
-                        continue;
-                    }
+                else if (stringEqual(inputLine[0], "stopKeyEvent")) {                    
+                    int num = Integer.parseInt(inputLine[1]);
+                    screen.stopUserInput(num);                   
                 }
-                else if (stringEqual(inputLine, "repaint")) {
+                else if (stringEqual(inputLine[0], "repaint")) {
                     String[][] output = screen.getOutput();
                     String str = "";
                                         

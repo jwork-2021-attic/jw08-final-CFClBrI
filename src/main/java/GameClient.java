@@ -149,14 +149,12 @@ public class GameClient extends JFrame implements KeyListener, Runnable {
 	}
 
     public void respondToUserInput(KeyEvent e) {
-        out.println("keyEvent");
-        out.println(playerId + "|" + e.getKeyCode());
+        out.println("keyEvent|" + playerId + "|" + e.getKeyCode());
         repaint();
     }
 
     public void stopUserInput() {
-        out.println("stopKeyEvent");
-        out.println(playerId);
+        out.println("stopKeyEvent|" + playerId);
         repaint();
     }
 
