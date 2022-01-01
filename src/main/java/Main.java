@@ -43,13 +43,24 @@ public class Main {
                     playerId++;
                 }
                 else if (stringEqual(inputLine, "keyEvent")) {
-                    int num = Integer.parseInt(in.readLine());
-                    int keyCode = Integer.parseInt(in.readLine());
-                    screen.respondToUserInput(num, keyCode);
+                    try {
+                        String[] str = in.readLine().split("\\|");
+                        int num = Integer.parseInt(str[0]);
+                        int keyCode = Integer.parseInt(str[1]);
+                        screen.respondToUserInput(num, keyCode);
+                    }
+                    catch (NumberFormatException e) {
+                        continue;
+                    }
                 }
                 else if (stringEqual(inputLine, "stopKeyEvent")) {
-                    int num = Integer.parseInt(in.readLine());
-                    screen.stopUserInput(num);
+                    try {
+                        int num = Integer.parseInt(in.readLine());
+                        screen.stopUserInput(num);
+                    }
+                    catch (NumberFormatException e) {
+                        continue;
+                    }
                 }
                 else if (stringEqual(inputLine, "repaint")) {
                     String[][] output = screen.getOutput();

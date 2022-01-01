@@ -150,8 +150,7 @@ public class GameClient extends JFrame implements KeyListener, Runnable {
 
     public void respondToUserInput(KeyEvent e) {
         out.println("keyEvent");
-        out.println(playerId);
-        out.println(String.valueOf(e.getKeyCode()));
+        out.println(playerId + "|" + e.getKeyCode());
         repaint();
     }
 
@@ -159,18 +158,6 @@ public class GameClient extends JFrame implements KeyListener, Runnable {
         out.println("stopKeyEvent");
         out.println(playerId);
         repaint();
-    }
-
-    private boolean stringEqual(String s1, String s2) {
-        if (s1.length() != s2.length()) {
-            return false;
-        }
-        for (int i = 0; i < s1.length(); i++) {
-            if ((int)s1.charAt(i) != (int)s2.charAt(i)) {
-                return false;
-            }
-        }
-        return true;
     }
 
     @Override
