@@ -42,8 +42,8 @@ public class WorldScreen implements Screen {
     Random random = new Random();
 
     public WorldScreen() {                 
-        //initScreen();
-        newGame();
+        initScreen();
+        //newGame();
     }
 
     public void initScreen() {

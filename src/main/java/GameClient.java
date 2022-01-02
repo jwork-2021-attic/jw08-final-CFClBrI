@@ -77,7 +77,7 @@ public class GameClient extends JFrame implements KeyListener, Runnable {
             e.printStackTrace();
         }
         */
-        byteBuffer = ByteBuffer.allocate(capacity);
+        byteBuffer = ByteBuffer.allocate(10);
         channel.read(byteBuffer);       
         byte[] bytes = byteBuffer.array();
         String res = new String(bytes).trim();
@@ -102,9 +102,9 @@ public class GameClient extends JFrame implements KeyListener, Runnable {
         */
         try {
             socketChannel = SocketChannel.open();
-            socketChannel.connect(new InetSocketAddress(portNumber));
-            socketChannel.configureBlocking(false);
+            socketChannel.connect(new InetSocketAddress(portNumber));            
             playerId = readData(socketChannel);
+            socketChannel.configureBlocking(false);
         }
         catch (IOException e) {
             e.printStackTrace();
@@ -162,11 +162,11 @@ public class GameClient extends JFrame implements KeyListener, Runnable {
         try {
             writeData(socketChannel, "repaint");        
             terminal.clear(' ', mazeBegin + mazeSize + 1, 1, 16, mazeSize);
-            byteBuffer = ByteBuffer.allocate(capacity);
+            //byteBuffer = ByteBuffer.allocate(capacity);
             String str = "";
             int readCount = 0;
             do {
-                byteBuffer.clear();
+                byteBuffer = ByteBuffer.allocate(capacity);
                 readCount = socketChannel.read(byteBuffer);
                 byte[] bytes = byteBuffer.array();
                 str += new String(bytes).trim();

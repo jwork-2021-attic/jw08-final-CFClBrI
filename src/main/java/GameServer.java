@@ -65,7 +65,6 @@ public class GameServer extends Thread {
         channel.read(byteBuffer);
         byte[] bytes = byteBuffer.array();
         String res = new String(bytes).trim();
-        System.out.println(res);
         return res;
     }
 
