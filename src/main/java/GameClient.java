@@ -1,22 +1,12 @@
-import java.io.BufferedReader;
 import java.io.IOException;
-import java.io.InputStreamReader;
-import java.io.ObjectInputStream;
-import java.io.PrintWriter;
-import java.net.InetAddress;
 import java.net.InetSocketAddress;
-import java.net.Socket;
-import java.net.UnknownHostException;
 import java.nio.ByteBuffer;
 import java.nio.channels.SocketChannel;
-import java.nio.charset.Charset;
-import java.nio.charset.CharsetDecoder;
 import java.util.concurrent.TimeUnit;
 
 import javax.swing.JFrame;
 
 import com.anish.calabashbros.World;
-
 import asciiPanel.AsciiFont;
 import asciiPanel.AsciiPanel;
 
@@ -24,12 +14,7 @@ import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
 
 public class GameClient extends JFrame implements KeyListener, Runnable {
-/*
-    private Socket echoSocket;
-    private PrintWriter out;
-    private ObjectInputStream ois;
-    private BufferedReader in;
-*/
+
     private ByteBuffer byteBuffer;
     private SocketChannel socketChannel;
 
@@ -40,7 +25,7 @@ public class GameClient extends JFrame implements KeyListener, Runnable {
     private String playerId = "";
     private int portNumber = 8888;
 
-    public GameClient(AsciiPanel terminal) {
+    public GameClient(AsciiPanel terminal) throws IOException {
         super();
 
         this.terminal = terminal;
@@ -67,16 +52,6 @@ public class GameClient extends JFrame implements KeyListener, Runnable {
     }
 
     private String readData(SocketChannel channel) throws IOException {
-        /*
-        String inputLine = "";
-        try {
-            CharsetDecoder decoder = Charset.forName("UTF-8").newDecoder();
-            inputLine = decoder.decode(byteBuffer.asReadOnlyBuffer()).toString().trim();            
-        }
-        catch (Exception e) {
-            e.printStackTrace();
-        }
-        */
         byteBuffer = ByteBuffer.allocate(10);
         channel.read(byteBuffer);       
         byte[] bytes = byteBuffer.array();
@@ -84,58 +59,14 @@ public class GameClient extends JFrame implements KeyListener, Runnable {
         return res;
     }
 
-    private void startClient() {
-        /*
-        String hostName = getHostName();
-        try {
-            echoSocket = new Socket(hostName, portNumber);
-            out = new PrintWriter(echoSocket.getOutputStream(), true);
-            in = new BufferedReader(new InputStreamReader(echoSocket.getInputStream()));
-            ois = new ObjectInputStream(echoSocket.getInputStream());
-
-            out.println("connect");
-            playerId = in.readLine().trim();
-        }
-        catch (IOException e) {
-            e.printStackTrace();
-        } 
-        */
-        try {
-            socketChannel = SocketChannel.open();
-            socketChannel.connect(new InetSocketAddress(portNumber));            
-            playerId = readData(socketChannel);
-            socketChannel.configureBlocking(false);
-        }
-        catch (IOException e) {
-            e.printStackTrace();
-        }
-    } 
-
-    public static String getHostNameForLiunx() {
-		try {
-			return (InetAddress.getLocalHost()).getHostName();
-		} catch (UnknownHostException uhe) {
-			String host = uhe.getMessage(); // host = "hostname: hostname"
-			if (host != null) {
-				int colon = host.indexOf(':');
-				if (colon > 0) {
-					return host.substring(0, colon);
-				}
-			}
-			return "UnknownHost";
-		}
-	}
- 
-	public static String getHostName() {
-		if (System.getenv("COMPUTERNAME") != null) {
-			return System.getenv("COMPUTERNAME");
-		} else {
-			return getHostNameForLiunx();
-		}
-	}
+    private void startClient() throws IOException {        
+        socketChannel = SocketChannel.open();
+        socketChannel.connect(new InetSocketAddress(portNumber));            
+        playerId = readData(socketChannel);
+        socketChannel.configureBlocking(false);        
+    }
 
     public void respondToUserInput(KeyEvent e) {
-        //out.println("keyEvent|" + playerId + "|" + e.getKeyCode());
         try {
             writeData(socketChannel, "keyEvent|" + playerId + "|" + e.getKeyCode());
         }
@@ -146,7 +77,6 @@ public class GameClient extends JFrame implements KeyListener, Runnable {
     }
 
     public void stopUserInput() {
-        //out.println("stopKeyEvent|" + playerId);
         try {
             writeData(socketChannel, "stopKeyEvent|" + playerId);
         }
@@ -157,25 +87,22 @@ public class GameClient extends JFrame implements KeyListener, Runnable {
     }
 
     @Override
-    public void repaint() {
-        //out.println("repaint");        
+    public void repaint() {      
         try {
             writeData(socketChannel, "repaint");        
-            terminal.clear(' ', mazeBegin + mazeSize + 1, 1, 16, mazeSize);
-            //byteBuffer = ByteBuffer.allocate(capacity);
+            terminal.clear(' ', mazeBegin + mazeSize + 1, 0, 16, mazeSize);
             String str = "";
             int readCount = 0;
             do {
                 byteBuffer = ByteBuffer.allocate(capacity);
                 readCount = socketChannel.read(byteBuffer);
                 byte[] bytes = byteBuffer.array();
-                str += new String(bytes).trim();
-            } while (readCount != 0);
-            //System.out.println(res + "\n");
-            
-            //String str = readData(socketChannel);
-            //str = in.readLine().trim();
-            
+                str += new String(bytes, 0, Math.min(bytes.length, readCount));
+            } while (readCount > 0);
+            str = str.trim();
+            if (str == "") {
+                return;
+            }            
             String[] output = str.split("\\|");
             if (output.length < World.HEIGHT * World.WIDTH) {
                 return;
@@ -197,7 +124,7 @@ public class GameClient extends JFrame implements KeyListener, Runnable {
                     else {
                         terminal.write(str, x, y);
                     }
-                                        
+
                 }
             }
                        
@@ -237,8 +164,13 @@ public class GameClient extends JFrame implements KeyListener, Runnable {
 
     public static void main(String[] args) {
         AsciiPanel terminal = new AsciiPanel(World.WIDTH, World.HEIGHT, AsciiFont.CP437_32x32);
-        GameClient gameClient = new GameClient(terminal);
-        Thread thread = new Thread(gameClient);
-        thread.start();
+        try {
+            GameClient gameClient = new GameClient(terminal);
+            Thread thread = new Thread(gameClient);
+            thread.start();
+        }
+        catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 }

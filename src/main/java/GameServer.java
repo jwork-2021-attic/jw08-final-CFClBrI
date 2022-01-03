@@ -1,4 +1,3 @@
-
 import java.io.IOException;
 import java.net.InetSocketAddress;
 
@@ -7,8 +6,6 @@ import java.nio.channels.SelectionKey;
 import java.nio.channels.Selector;
 import java.nio.channels.ServerSocketChannel;
 import java.nio.channels.SocketChannel;
-import java.nio.charset.Charset;
-import java.nio.charset.CharsetDecoder;
 import java.util.Iterator;
 import java.util.Set;
 
@@ -19,15 +16,18 @@ import com.anish.screen.WorldScreen;
 public class GameServer extends Thread {
     
     private ByteBuffer byteBuffer;
-    private Screen screen = new WorldScreen();
+    private Screen screen;
     private int playerId = 0;
     private int capacity = 20;
     private int portNumber = 8888;
     private ServerSocketChannel serverSocketChannel;
     private Selector selector;
     private SelectionKey key;
+    private boolean repaintRequest = false;
 
-    public GameServer() throws IOException {
+    public GameServer(Screen screen) throws IOException {
+        this.screen = screen;
+
         serverSocketChannel = ServerSocketChannel.open();
         serverSocketChannel.socket().bind(new InetSocketAddress(portNumber));
         selector = Selector.open();
@@ -47,25 +47,29 @@ public class GameServer extends Thread {
         return true;
     }
 
-    private String fillString(String str, int targetLen) {
-        String res = new String(str);
-        for (int i = 0; i < targetLen - str.length(); i++) {
-            res += ' ';
-        }
-        return res;
-    }
-
-    private void writeData(SocketChannel channel, String data) throws IOException {
-        byteBuffer = ByteBuffer.wrap(data.getBytes());
-        channel.write(byteBuffer);        
-    }
-
     private String readData(SocketChannel channel) throws IOException {
         byteBuffer = ByteBuffer.allocate(capacity);
         channel.read(byteBuffer);
         byte[] bytes = byteBuffer.array();
         String res = new String(bytes).trim();
         return res;
+    }
+
+    private String getOutPutStr() {
+        String[][] output = screen.getOutput();
+        String str = "";                                                    
+        for (int y = 0; y < World.HEIGHT; y++) {
+            for (int x = 0; x < World.WIDTH; x++) {
+                if (output[x][y] == "") {
+                    str += '^';
+                }
+                else {
+                    str += output[x][y];
+                }
+                str += '|';
+            }
+        }
+        return str;
     }
 
     @Override
@@ -83,8 +87,9 @@ public class GameServer extends Thread {
                     if (key.isAcceptable()) {
                         SocketChannel socketChannel = serverSocketChannel.accept();
                         socketChannel.configureBlocking(false);
-                        socketChannel.register(selector, SelectionKey.OP_READ);
-                        writeData(socketChannel, Integer.toString(playerId));
+                        socketChannel.register(selector, SelectionKey.OP_READ | SelectionKey.OP_WRITE);
+                        byteBuffer = ByteBuffer.wrap(Integer.toString(playerId).getBytes());
+                        socketChannel.write(byteBuffer);
                         playerId++;
                     }
                     else if (key.isReadable()) {
@@ -100,35 +105,19 @@ public class GameServer extends Thread {
                             screen.stopUserInput(num);                   
                         }
                         else if (stringEqual(inputLine[0], "repaint")) {
-                            String[][] output = screen.getOutput();
-                            String str = "";                                                    
-                            for (int y = 0; y < World.HEIGHT; y++) {
-                                for (int x = 0; x < World.WIDTH; x++) {
-                                    if (output[x][y] == "") {
-                                        str += '^';
-                                    }
-                                    else {
-                                        str += output[x][y];
-                                    }
-                                    str += '|';
-                                }
-                            }
-                            //writeData(socketChannel, fillString(str, 20000));
-                            /*
+                            repaintRequest = true;
+                        }
+                    }
+                    else if (key.isWritable()) {
+                        if (repaintRequest) {
+                            SocketChannel socketChannel = (SocketChannel)key.channel();
+                            String str = getOutPutStr();
                             byteBuffer = ByteBuffer.wrap(str.getBytes());
                             while (byteBuffer.hasRemaining()) {
                                 socketChannel.write(byteBuffer);
                             }
-                            */
-                            int i = 0;
-                            String currStr = "";
-                            for (i = 0; i < str.length(); i += 1000) {
-                                currStr = str.substring(i, Math.min(i + 1000, str.length()));
-                                byteBuffer = ByteBuffer.wrap(currStr.getBytes());
-                                socketChannel.write(byteBuffer);
-                            }
-                            
-                        }
+                            repaintRequest = false;
+                        }                        
                     }
                     iterator.remove();
                 }
@@ -140,8 +129,9 @@ public class GameServer extends Thread {
     }
 
     public static void main(String[] args) {
+        Screen screen = new WorldScreen();
         try {
-            GameServer gameServer = new GameServer();
+            GameServer gameServer = new GameServer(screen);
             gameServer.start();
         }
         catch (IOException e) {
