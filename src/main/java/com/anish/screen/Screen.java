@@ -1,10 +1,6 @@
 package com.anish.screen;
 
-import asciiPanel.AsciiPanel;
-
 public interface Screen {
-
-    public void displayOutput(AsciiPanel terminal);
 
     public String[][] getOutput();
 

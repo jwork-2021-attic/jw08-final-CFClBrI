@@ -8,9 +8,11 @@ public class World implements Serializable {
 
     public static final int WIDTH = 50;
     public static final int HEIGHT = 50;
+    public static final int SCREEN_HEIGHT = 25;
     public int mazeBegin;
     public int mazeSize;
     public int yBegin = 0;
+    private int beanCount = 0;
     private static final long serialVersionUID = 15L;
 
     private boolean isOver = false;
@@ -33,6 +35,51 @@ public class World implements Serializable {
                     tiles[i][j].setThing(new Floor(this));
                 }                
             }
+        }
+    }
+
+    public void setBeanCount(int beanCount) {
+        this.beanCount = beanCount;
+    }
+
+    public void beanEaten() {
+        beanCount--;
+        if (beanCount <= 0) {
+            win();
+        }
+    }
+
+    private void win() {
+        showGameResult(true);
+        killCreatures();
+    }
+
+    private void lose() {
+        showGameResult(false);
+        killCreatures();
+    }
+
+    public void judgeLose() {
+        for (int i = 0; i < players.size(); i++) {
+            if (players.get(i).getAlive()) {
+                return;
+            }
+        }
+        lose();
+    }
+
+    public void showGameResult(boolean isWin) {
+        setOver();
+        int winBeginX = mazeBegin + mazeSize + 2;
+        int winBgeinY = mazeBegin + 7; 
+        for (int i = 0; i < 15; i++) {
+            clear(winBeginX + i, winBgeinY);
+        }
+        if (isWin) {
+            showString("Player Win", winBeginX, winBgeinY);
+        }
+        else {
+            showString("Player Lose", winBeginX, winBgeinY);
         }
     }
 
@@ -72,24 +119,29 @@ public class World implements Serializable {
     }
 
     public void continueGame() {
+        players = new Vector<>();
         for (int i = 0; i < mazeSize; i++) {
             for (int j = 0; j < mazeSize; j++) {
                 Thing thing = get(mazeBegin + i, mazeBegin + j);
                 if (thing instanceof Moveable) {
                     Thread thread = new Thread((Moveable)thing);
                     thread.start();
+                    if (thing instanceof Calabash) {
+                        Calabash player = (Calabash)thing;
+                        players.add(player);
+                    }
                 }
             }
         }
     }
 
-    public void killMonsters() {        
+    public void killCreatures() {        
         for (int i = 0; i < mazeSize; i++) {
             for (int j = 0; j < mazeSize; j++) {
                 Thing thing = get(mazeBegin + i, mazeBegin + j);
-                if (thing instanceof Monster) {
-                    Monster monster = (Monster)thing;
-                    monster.kill();
+                if (thing instanceof Creature) {
+                    Creature creature = (Creature)thing;
+                    creature.kill();
                 }
             }
         }        

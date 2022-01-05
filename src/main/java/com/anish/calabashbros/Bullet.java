@@ -2,7 +2,7 @@ package com.anish.calabashbros;
 
 import java.util.concurrent.TimeUnit;
 
-public class Bullet extends Creature {
+public class Bullet extends Moveable {
     
     private int direction;
     private static final long serialVersionUID = 2L;
@@ -19,6 +19,9 @@ public class Bullet extends Creature {
         if (thing instanceof Wall) {
             return Position.WALL;
         }
+        else if (thing instanceof Calabash) {            
+            return Position.CALABASH;
+        }
         else if (thing instanceof Monster) {
             Monster monster = (Monster)thing;
             monster.kill();
@@ -26,7 +29,7 @@ public class Bullet extends Creature {
         }
         else if (thing instanceof Bullet) {
             Bullet bullet = (Bullet)thing;
-            bullet.kill();
+            bullet.stop();
             return Position.BULLET;
         }
         else if (thing instanceof Bean) {            
@@ -42,7 +45,7 @@ public class Bullet extends Creature {
     }
 
     public void run() {
-        while (alive) {
+        while (!isStop) {
             int directionX = directions[direction][0];
             int directionY = directions[direction][1];
             Position position = judgeMove(directionX, directionY);
@@ -53,7 +56,7 @@ public class Bullet extends Creature {
             }
             if (position == Position.WALL || position == Position.MONSTER ||
                 position == Position.BULLET) {                
-                kill();  
+                stop();
                 continue;                           
             }
             move(getX() + directionX, getY() + directionY);

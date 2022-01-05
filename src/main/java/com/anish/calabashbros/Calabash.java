@@ -4,28 +4,31 @@ import java.util.concurrent.TimeUnit;
 
 public class Calabash extends Creature {
     
-    private int beanCount;
     private int HP;
     private int invincibleTime = 0;
     private int beginX;
     private int beginY;
     private int mazeBegin;
     private int mazeSize;
+    private int playerId;
+    private int printBeginY;
     private int step = 0;
     private static final long serialVersionUID = 3L;
 
-    public Calabash(World world, int beanCount, int beginHP,
-                    int beginX, int beginY, int currX, int currY,
+    public Calabash(World world, int playerId, int beanCount, int beginHP,
+                    int beginX, int beginY, int currX, int currY, int printBeginY,
                     int mazeBegin, int mazeSize) {
         super("resources/player/3_stand.png", world);
-        this.beanCount = beanCount;
         this.beginX = beginX;
         this.beginY = beginY;
         this.mazeBegin = mazeBegin;
         this.mazeSize = mazeSize;
+        this.playerId = playerId;
+        this.printBeginY = printBeginY;
         HP = beginHP;
         moveTo(currX, currY);
         isOn = Position.FLOOR;
+        showPlayerId();
         showHP(HP);
     }
 
@@ -73,7 +76,8 @@ public class Calabash extends Creature {
         HP--;
         showHP(HP);
         if (HP <= 0) {
-            lose();
+            kill();
+            world.judgeLose();
         }
         else {
             resurrect();
@@ -84,7 +88,7 @@ public class Calabash extends Creature {
         move(beginX, beginY);
         setUrl("resources/player/3_stand.png");
         world.yBegin = 0;
-        eatCherry();
+        enterInvincible(10);
     }
 
     public void enterInvincible(int time) {
@@ -110,10 +114,7 @@ public class Calabash extends Creature {
     }
 
     private void eatBean() {        
-        beanCount--;
-        if (beanCount <= 0) {
-            win();
-        }
+        world.beanEaten();
     }
 
     private void eatCherry() {
@@ -169,50 +170,30 @@ public class Calabash extends Creature {
         bulletThread.start();
     }
 
-    private void win() {
-        kill();
-        showWin();
-        world.killMonsters();
-    }
-
-    private void lose() {
-        kill();
-        showLose();
-        world.killMonsters();
+    public void showPlayerId() {
+        int idBeginX = mazeBegin + mazeSize + 2;
+        int idBeginY = printBeginY;
+        world.showString("Player " + playerId, idBeginX, idBeginY);
     }
 
     public void showHP(int HP) {
         int HPBeginX = mazeBegin + mazeSize + 2;
-        int HPBeginY = mazeBegin + mazeSize / 2; 
+        int HPBeginY = printBeginY + 1; 
         world.showString("HP:" + HP, HPBeginX, HPBeginY);       
     }
    
     public void showInvincible(int second) {
         int invinBeginX = mazeBegin + mazeSize + 2;
-        int invinBeginY = mazeBegin + mazeSize / 2 + 1;        
+        int invinBeginY = printBeginY + 2;        
         world.showString("Invincible:" + second / 10 + second % 10, invinBeginX, invinBeginY);        
     }
 
     public void hideInvincible() {
         int invinBeginX = mazeBegin + mazeSize + 2;
-        int invinBeginY = mazeBegin + mazeSize / 2 + 1;
+        int invinBeginY = printBeginY + 2;
         for (int i = 0; i < 13; i++) {
             world.clear(invinBeginX + i, invinBeginY);
         }
-    }
-
-    public void showWin() {
-        world.setOver();
-        int winBeginX = mazeBegin + mazeSize + 2;
-        int winBgeinY = mazeBegin + mazeSize / 2 - 1; 
-        world.showString("You Win", winBeginX, winBgeinY);
-    }
-
-    public void showLose() {
-        world.setOver();
-        int loseBeginX = mazeBegin + mazeSize + 2;
-        int loseBgeinY = mazeBegin + mazeSize / 2 - 1;  
-        world.showString("You Lose", loseBeginX, loseBgeinY);
     }
 
     public void walk(int direction) {

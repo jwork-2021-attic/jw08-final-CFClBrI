@@ -4,6 +4,7 @@ public class Moveable extends Thing implements Runnable {
     
     protected int[][] directions;
     protected Position isOn;
+    protected boolean isStop = false;
     private static final long serialVersionUID = 10L;
 
     public Moveable(String url, World world) {
@@ -31,6 +32,11 @@ public class Moveable extends Thing implements Runnable {
 
     public void setOn(Position position) {
         isOn = position;
+    }
+
+    public void stop() {
+        reduct();
+        isStop = true;
     }
 
     protected void reduct() {

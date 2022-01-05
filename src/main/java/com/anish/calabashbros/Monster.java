@@ -17,7 +17,7 @@ public class Monster extends Creature {
     private int[][] record;
     private Vector<Integer> path;
     private int step;
-    private Vector<int[]> store;
+    private int[][] store;
     private int destination = -1;
     private int hardLevel = 0;
     private static final long serialVersionUID = 8L;
@@ -29,7 +29,7 @@ public class Monster extends Creature {
         this.players = players;
         this.mazeBegin = world.mazeBegin;
         this.mazeSize = world.mazeSize;
-        store = new Vector<>(players.size());
+        store = new int[players.size()][2];
         isOn = Position.FLOOR;
     }
 
@@ -49,7 +49,8 @@ public class Monster extends Creature {
             int currX = curr[0];
             int currY = curr[1];
             for (int i = 0; i < players.size(); i++) {
-                if (players.get(i).getInvincible()) {
+                if (!players.get(i).getAlive() || 
+                    players.get(i).getInvincible()) {
                     continue;
                 }
                 if (currX == players.get(i).getX() &&
@@ -99,8 +100,8 @@ public class Monster extends Creature {
 
     private boolean judgePlayersMove() {
         for (int i = 0; i < players.size(); i++) {
-            if (players.get(i).getX() != store.get(i)[0] ||
-                players.get(i).getY() != store.get(i)[1]) {
+            if (players.get(i).getX() != store[i][0] ||
+                players.get(i).getY() != store[i][1]) {
                 return true;
             }
         }
@@ -118,8 +119,8 @@ public class Monster extends Creature {
 
     private void storePlayersPos() {
         for (int i = 0; i < players.size(); i++) {
-            store.get(i)[0] = players.get(i).getX();
-            store.get(i)[1] = players.get(i).getY();
+            store[i][0] = players.get(i).getX();
+            store[i][1] = players.get(i).getY();
         }
     }
 
@@ -154,7 +155,7 @@ public class Monster extends Creature {
         }
         else if (thing instanceof Bullet) {
             Bullet bullet = (Bullet)thing;
-            bullet.kill();
+            bullet.stop();
             return Position.BULLET;
         }
         else if (thing instanceof Bean) {

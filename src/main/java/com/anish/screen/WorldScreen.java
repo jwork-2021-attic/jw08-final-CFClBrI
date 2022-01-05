@@ -11,7 +11,6 @@ import java.util.Vector;
 
 import com.anish.calabashbros.Bean;
 import com.anish.calabashbros.Calabash;
-import com.anish.calabashbros.Char;
 import com.anish.calabashbros.Cherry;
 import com.anish.calabashbros.World;
 import com.anish.calabashbros.Wall;
@@ -20,8 +19,6 @@ import com.anish.calabashbros.ImagePiece;
 import com.anish.calabashbros.Drug;
 import com.anish.calabashbros.Thing;
 import com.anish.calabashbros.MonsterManager;
-
-import asciiPanel.AsciiPanel;
 
 import com.anish.mazeGenerator.MazeGenerator;
 
@@ -38,12 +35,11 @@ public class WorldScreen implements Screen {
     private int beginHP = 3;
     private boolean start = true;
     private int[][] playerPositons;
-    private int playerCount = 1;
+    private int playerCount = 2;
     Random random = new Random();
 
     public WorldScreen() {                 
         initScreen();
-        //newGame();
     }
 
     public void initScreen() {
@@ -65,13 +61,16 @@ public class WorldScreen implements Screen {
         world = new World(mazeBegin, mazeSize);
         int[][] maze = createMaze();
         setWorld(maze);
-        int posX = playerPositons[0][0], posY = playerPositons[0][1];    
-        Calabash calabash = new Calabash(world, beanCount, beginHP,
-                                posX, posY, posX, posY,
-                                mazeBegin, mazeSize);
         Vector<Calabash> players = new Vector<>();
-        players.add(calabash);
+        for (int i = 0; i < playerCount; i++) {
+            int posX = playerPositons[i][0], posY = playerPositons[i][1];    
+            Calabash calabash = new Calabash(world, i, beanCount, beginHP,
+                                posX, posY, posX, posY, mazeBegin + 9 + i * 4,
+                                mazeBegin, mazeSize);
+            players.add(calabash);
+        }                
         world.setPlayers(players);
+        world.setBeanCount(beanCount);
         monsterManager = new MonsterManager(world, players);
         monsterManager.start();
     }
@@ -111,7 +110,7 @@ public class WorldScreen implements Screen {
             }
         }
         world.showString("Press S to save", mazeBegin + mazeSize + 2, 
-                         mazeBegin + mazeSize / 2 - 1);
+                         mazeBegin + 7);
     }
  
     public void loadGame() {
@@ -290,34 +289,15 @@ public class WorldScreen implements Screen {
     }
 
     @Override
-    public void displayOutput(AsciiPanel terminal) {
-        for (int x = 0; x < World.WIDTH; x++) {
-            for (int y = 0; y < World.HEIGHT - world.yBegin; y++) {
-                Thing thing = world.get(x, y + world.yBegin);
-                if (thing == null) {
-                    continue;
-                }
-                if (thing instanceof Char) {
-                    Char character = (Char)thing;                  
-                    terminal.write(character.getCh(), x, y);
-                }
-                else {
-                    terminal.write(thing.getUrl(), x, y);
-                }
-            }
-        }
-    }
-
-    @Override
     public String[][] getOutput() {
-        String[][] output = new String[World.WIDTH][World.HEIGHT];
+        String[][] output = new String[World.WIDTH][World.SCREEN_HEIGHT];
         for (int x = 0; x < World.WIDTH; x++) {
-            for (int y = 0; y < World.HEIGHT; y++) {
+            for (int y = 0; y < World.SCREEN_HEIGHT; y++) {
                 output[x][y] = "";
             }
         }
         for (int x = 0; x < World.WIDTH; x++) {
-            for (int y = 0; y < World.HEIGHT - world.yBegin; y++) {
+            for (int y = 0; y < World.SCREEN_HEIGHT; y++) {
                 Thing thing = world.get(x, y + world.yBegin);
                 if (thing != null) {
                     output[x][y] = thing.getUrl();

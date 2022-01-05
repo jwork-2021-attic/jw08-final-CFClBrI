@@ -73,7 +73,6 @@ public class GameClient extends JFrame implements KeyListener, Runnable {
         catch (IOException exp) {
             exp.printStackTrace();
         }
-        repaint();
     }
 
     public void stopUserInput() {
@@ -83,7 +82,6 @@ public class GameClient extends JFrame implements KeyListener, Runnable {
         catch (IOException exp) {
             exp.printStackTrace();
         }
-        repaint();
     }
 
     @Override
@@ -104,13 +102,14 @@ public class GameClient extends JFrame implements KeyListener, Runnable {
                 return;
             }            
             String[] output = str.split("\\|");
-            if (output.length < World.HEIGHT * World.WIDTH) {
+            if (output.length < World.SCREEN_HEIGHT * World.WIDTH) {
+                System.out.println(output.length);
                 return;
             }
 
-            for (int y = 0; y < World.HEIGHT; y++) {
+            for (int y = 0; y < World.SCREEN_HEIGHT; y++) {
                 for (int x = 0; x < World.WIDTH; x++) {
-                    str = output[y * World.HEIGHT + x];
+                    str = output[y * World.WIDTH + x];
                     if (str.length() == 0) {
                         continue;
                     }

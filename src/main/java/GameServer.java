@@ -58,7 +58,7 @@ public class GameServer extends Thread {
     private String getOutPutStr() {
         String[][] output = screen.getOutput();
         String str = "";                                                    
-        for (int y = 0; y < World.HEIGHT; y++) {
+        for (int y = 0; y < World.SCREEN_HEIGHT; y++) {
             for (int x = 0; x < World.WIDTH; x++) {
                 if (output[x][y] == "") {
                     str += '^';
